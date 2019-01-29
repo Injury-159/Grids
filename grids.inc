@@ -4,7 +4,7 @@
 
 #define _inc_grids_	 
 
-#define MAX_GRIDS 						3
+#define MAX_GRIDS 					3
 #define MAX_GRID_ROWS					10
 #define MAX_GRID_COLUMNS				10
 #define INVALID_GRID_VECTOR				Vector:INVALID
@@ -53,13 +53,9 @@ Grid_Destroy(grid)
 
 Grid_SetData(grid, x, y, data)
 {
-	if(!Iter_Contains(Grids, grid))
-		return;
-
 	if(!Grid_IsValidCell(grid, x, y))
 		return;
-
-
+		
 	grid_Data[grid][x][y] = data;
 }
 
