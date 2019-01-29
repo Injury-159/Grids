@@ -24,16 +24,16 @@ static grid_Columns[MAX_GRIDS];
 
 Grid_Create(rows, columns)
 {
-	new idx;
-	if((idx = Iter_Alloc(Grids)) > -1)
+	new grid;
+	if((grid = Iter_Alloc(Grids)) > -1)
 	{
-		grid_Rows[idx] = clamp(rows, 1, MAX_GRID_ROWS);
-		grid_Columns[idx] = clamp(columns, 1, MAX_GRID_COLUMNS);
-
-		Grid_ClearAllData(idx);
-		return idx;
+		grid_Rows[grid] = clamp(rows, 1, MAX_GRID_ROWS);
+		grid_Columns[grid] = clamp(columns, 1, MAX_GRID_COLUMNS);
+		
+		memset(grid_Data[grid][0][0], INVALID_GRID_DATA, MAX_GRIDS * MAX_GRID_ROWS * MAX_GRID_COLUMNS);
+		return grid;
 	}
-	return INVALID;
+	return -1;
 }
 
 
@@ -43,7 +43,7 @@ Grid_Destroy(grid)
 	if(!Iter_Contains(Grids, grid))
 		return;
 
-	memset(grid_Data[grid][0][0], INVALID_GRID_DATA, MAX_GRIDS * MAX_GRID_ROWS * MAX_GRID_COLUMNS)
+	memset(grid_Data[grid][0][0], INVALID_GRID_DATA, MAX_GRIDS * MAX_GRID_ROWS * MAX_GRID_COLUMNS);
 	grid_Rows[grid] = grid_Columns[grid] = 0;
 
 	Iter_Remove(Grids, grid);
