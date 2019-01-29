@@ -1,31 +1,25 @@
-#define MAX_GRIDS 						1000
-#define MAX_GRID_R						10
-#define MAX_GRID_C						10
+#if defined _inc_grids_
+	#endinput
+#endif 
+
+#define _inc_grids_	 
+
+#define MAX_GRIDS 						3
+#define MAX_GRID_ROWS					10
+#define MAX_GRID_COLUMNS				10
 #define INVALID_GRID_VECTOR				Vector:INVALID
-#define INVALID_GRID_DATA 				(cellmin - 1)
 
 
+const INVALID_GRID_DATA 				(cellmin - 1)
+	
 
-#define Grid_ClearAllData(%0) \
-	memset(grid_Data[(%0)][0][0], INVALID_GRID_DATA, MAX_GRIDS * MAX_GRID_R * MAX_GRID_C)
-
-
-
-#define Grid_IsValidCell(%0,%1,%2) \
-	((0 <= (%1) < grid_Rows[(%0)]) && (0 <= (%2) < grid_Rows[(%0)]))	
-
+static Iterator:Grids<MAX_GRIDS>;
+static grid_Data[MAX_GRIDS][MAX_GRID_ROWS][MAX_GRID_COLUMNS];
+static grid_Rows[MAX_GRIDS];
+static grid_Columns[MAX_GRIDS];
 
 
-static 
-	Iterator:Grids<MAX_GRIDS>,
-	grid_Data[MAX_GRIDS][MAX_GRID_R][MAX_GRID_C],
-	grid_Rows[MAX_GRIDS],
-	grid_Columns[MAX_GRIDS];
-
-
-// ———————————————————————————————————————————————————————————————————
-// FUNCTIONS
-// ———————————————————————————————————————————————————————————————————
+//------------------------------------------------------------------------------
 
 
 Grid_Create(rows, columns)
@@ -33,8 +27,8 @@ Grid_Create(rows, columns)
 	new idx;
 	if((idx = Iter_Alloc(Grids)) > -1)
 	{
-		grid_Rows[idx] = clamp(rows, 1, MAX_GRID_R);
-		grid_Columns[idx] = clamp(columns, 1, MAX_GRID_C);
+		grid_Rows[idx] = clamp(rows, 1, MAX_GRID_ROWS);
+		grid_Columns[idx] = clamp(columns, 1, MAX_GRID_COLUMNS);
 
 		Grid_ClearAllData(idx);
 		return idx;
@@ -44,53 +38,48 @@ Grid_Create(rows, columns)
 
 
 
-Grid_Destroy(index)
+Grid_Destroy(grid)
 {
-	if(!Iter_Contains(Grids, index))
+	if(!Iter_Contains(Grids, grid))
 		return;
 
-	Grid_ClearAllData(index);
-	grid_Rows[index] = grid_Columns[index] = 0;
+	memset(grid_Data[grid][0][0], INVALID_GRID_DATA, MAX_GRIDS * MAX_GRID_ROWS * MAX_GRID_COLUMNS)
+	grid_Rows[grid] = grid_Columns[grid] = 0;
 
-	Iter_Remove(Grids, index);
+	Iter_Remove(Grids, grid);
 }
 
 
 
-Grid_SetData(index, cellx, celly, data)
+Grid_SetData(grid, x, y, data)
 {
-	if(!Iter_Contains(Grids, index))
+	if(!Iter_Contains(Grids, grid))
 		return;
 
-	if(!Grid_IsValidCell(index, cellx, celly))
+	if(!Grid_IsValidCell(grid, x, y))
 		return;
 
 
-	grid_Data[index][cellx][celly] = data;
+	grid_Data[grid][x][y] = data;
+}
+
+
+stock Grid_IsValidCell(grid, x, y)
+{
+	if(!Iter_Contains(Grids, grid))
+		return 0;
+
+	return ((-1 < x < grid_Rows[grid]) && (-1 < y < grid_Rows[grid]));
 }
 
 
 
-stock Grid_Clear(index)
+Grid_HasSpace(grid, sx, sy, sizex, sizey, &Vector:cells = INVALID_GRID_VECTOR)
 {
-	if(!Iter_Contains(Grids, index))
-		return;
-
-	Grid_ClearAllData(index);		
-}
-
-
-
-Grid_HasSpace(index, sx, sy, sizex, sizey, &Vector:cells = INVALID_GRID_VECTOR)
-{
-	if(!Iter_Contains(Grids, index))
+	if(!Grid_IsValidCell(grid, sx, sy))
 		return 0;
 
 	if(sizex < 1 || sizey < 1)
-		return 0;
-
-
-	if(!Grid_IsValidCell(index, sx, sy))
 		return 0;
 
 	new 
@@ -98,12 +87,12 @@ Grid_HasSpace(index, sx, sy, sizex, sizey, &Vector:cells = INVALID_GRID_VECTOR)
 		endy = (sy - (sizey - 1))
 	;
 
-	return Internal_HasSpaceAtGrid(index, sx, sy, sizex, sizey, endx < 0 ? 0 : endx, endy < 0 ? 0 : endy, cells);
+	return Internal_HasSpaceAtGrid(grid, sx, sy, sizex, sizey, endx < 0 ? 0 : endx, endy < 0 ? 0 : endy, cells);
 }
 
 
 
-static Internal_HasSpaceAtGrid(index, sx, sy, sizex, sizey, endx, endy, &Vector:cells)
+static Internal_HasSpaceAtGrid(grid, sx, sy, sizex, sizey, endx, endy, &Vector:cells)
 {
 	new 
 		sumx = sx + sizex,
@@ -120,23 +109,23 @@ static Internal_HasSpaceAtGrid(index, sx, sy, sizex, sizey, endx, endy, &Vector:
 		{
 			if(sizex > 1)
 			{
-				if(a < (sumx - 1) && (grid_Data[index][a + 1][b] != INVALID_GRID_DATA  || (a + 1) > (grid_Rows[index] - 1)))
+				if(a < (sumx - 1) && (grid_Data[grid][a + 1][b] != INVALID_GRID_DATA  || (a + 1) > (grid_Rows[grid] - 1)))
 				{
-					if((sx - 1) >= endx) return Internal_HasSpaceAtGrid(index, (sx - 1), b, sizex, sizey, endx, endy, cells);
+					if((sx - 1) >= endx) return Internal_HasSpaceAtGrid(grid, (sx - 1), b, sizex, sizey, endx, endy, cells);
 					else return 0;
 				}
 			}
 
 			if(sizey > 1)
 			{
-				if(b < (sumy - 1) && (grid_Data[index][a][b + 1] != INVALID_GRID_DATA || (b + 1) > (grid_Columns[index] - 1)))
+				if(b < (sumy - 1) && (grid_Data[grid][a][b + 1] != INVALID_GRID_DATA || (b + 1) > (grid_Columns[grid] - 1)))
 				{
-					if((sy - 1) >= endy) return Internal_HasSpaceAtGrid(index, a, (sy - 1), sizex, sizey, endx, endy, cells);
+					if((sy - 1) >= endy) return Internal_HasSpaceAtGrid(grid, a, (sy - 1), sizex, sizey, endx, endy, cells);
 					else return 0;
 				}
 			}
 
-			if(grid_Data[index][a][b] != INVALID_GRID_DATA)
+			if(grid_Data[grid][a][b] != INVALID_GRID_DATA)
 				return 0;
 
 
@@ -144,15 +133,10 @@ static Internal_HasSpaceAtGrid(index, sx, sy, sizex, sizey, endx, endy, &Vector:
 			{
 				new tmp[2];
 				tmp[0] = a;
-				tmp[0] = b;
+				tmp[1] = b;
 				VECTOR_push_back_arr(cells, tmp);
 			}
 		}
 	}
 	return 1;	
 }
-
-
-
-#undef Grid_ClearAllData
-#undef Grid_IsValidCell
