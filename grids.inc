@@ -60,7 +60,7 @@ Grid_SetData(grid, x, y, data)
 }
 
 
-stock Grid_IsValidCell(grid, x, y)
+Grid_IsValidCell(grid, x, y)
 {
 	if(!Iter_Contains(Grids, grid))
 		return 0;
