@@ -65,7 +65,7 @@ Grid_IsValidCell(grid, x, y)
 	if(!Iter_Contains(Grids, grid))
 		return 0;
 
-	return ((-1 < x < grid_Rows[grid]) && (-1 < y < grid_Rows[grid]));
+	return ((-1 < x < grid_Rows[grid]) && (-1 < y < grid_Columns[grid]));
 }
 
 
